@@ -2,13 +2,16 @@
 
 const request = require('request');
 
-request(process.argv[2], (error, response, body) => {
+const apiUrl = process.argv[2];
+
+request(apiUrl, (error, response, body) => {
   if (error) {
-    console.error(`${error}`);
+    console.error(`error: ${error}`);
   } else {
-    const movies = JSON.parse(body).results;
-    const wedgeAntilles = movies.filter(movie =>
-      movie.characters.find(character => character.endsWith('/18/')));
-    console.log(`${wedgeAntilles.length}`);
+    const moviesData = JSON.parse(body);
+    const wedgeAntillesMovies = moviesData.results.filter(movie =>
+      movie.characters.some(character => character.includes('18'))
+    );
+    console.log(wedgeAntillesMovies.length);
   }
 });
