@@ -1,5 +1,5 @@
-function displayMessage(){
-	return "Hello NodeJS!"
-}
+function displayMessage(message) {
+	console.log(message);
+  }
 
-displayMessage()
+  module.exports = displayMessage;
