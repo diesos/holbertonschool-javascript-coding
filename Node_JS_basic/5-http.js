@@ -1,89 +1,37 @@
 const http = require('http');
-const fs = require('fs');
+const countStudents = require('./3-read_file_async');
 
-function countStudents(filepath) {
-  return new Promise((resolve, reject) => {
-    fs.promises.readFile(filepath, { encoding: 'utf8' })
-      .then((csv) => {
-        const headerArray = csv.split(/\r?\n|\n/);
-        const headers = headerArray[0].split(',');
+const database = process.argv[2];
 
-        const dictList = [];
-        const noHeaderArray = headerArray.slice(1);
-        for (let i = 0; i < noHeaderArray.length; i += 1) {
-          const data = noHeaderArray[i].split(',');
-          if (data.length === headers.length) {
-            const row = {};
-            for (let j = 0; j < headers.length; j += 1) {
-              row[headers[j].trim()] = data[j].trim();
-            }
-            dictList.push(row);
-          }
-        }
+const app = http.createServer((request, response) => {
+  response.writeHead(200, { 'Content-Type': 'text/plain' });
+  if (request.url === '/') {
+    response.write('Hello Holberton School!');
+    response.end();
+  }
 
-        let countCS = 0;
-        let countSWE = 0;
-        const studentsCS = [];
-        const studentsSWE = [];
-
-        dictList.forEach((element) => {
-          if (element.field === 'CS') {
-            countCS += 1;
-            studentsCS.push(element.firstname);
-          } else if (element.field === 'SWE') {
-            countSWE += 1;
-            studentsSWE.push(element.firstname);
-          }
-        });
-
-        const countStudents = countCS + countSWE;
-
-        resolve({
-          countStudents,
-          countCS,
-          countSWE,
-          studentsCS,
-          studentsSWE,
-        });
+  if (request.url === '/students') {
+    response.write('This is the list of our students\n');
+    countStudents(database)
+      .then((result) => {
+        response.write(`${result.totalNumber}\n`);
+        response.write(`${result.CS}\n`);
+        response.write(`${result.SWE}`);
+        response.end();
       })
       .catch((error) => {
-        console.error('Error reading file:', error);
-        reject(new Error('Cannot load the database'));
-      });
-  });
-}
-
-const pathToDB = process.argv[2];
-const hostname = '127.0.0.1';
-const port = 1245;
-
-const app = http.createServer((req, res) => {
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/plain');
-  if (req.url === '/') {
-    res.end('Hello Holberton School!');
-  } else if (req.url === '/students') {
-    countStudents(pathToDB)
-      .then(({
-        countStudents,
-        countCS,
-        countSWE,
-        studentsCS,
-        studentsSWE,
-      }) => {
-        res.write('This is the list of our students\n');
-        res.write(`Number of students: ${countStudents}\n`);
-        res.write(`Number of students in CS: ${countCS}. List: ${studentsCS.join(', ')}\n`);
-        res.write(`Number of students in SWE: ${countSWE}. List: ${studentsSWE.join(', ')}`);
-        res.end();
-      })
-      .catch((error) => {
-        console.error('Error in countStudents:', error.message);
-        res.end('Cannot load the database');
+        console.error('Error processing students data:', error);
+        response.write('Cannot load the database');
+        response.end();
       });
   }
 });
 
-app.listen(port, hostname);
-
+const port = 1245;
 module.exports = app;
+
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server is running : http://localhost:${port}`);
+  });
+}

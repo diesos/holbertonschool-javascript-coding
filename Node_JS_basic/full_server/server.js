@@ -1,13 +1,13 @@
 const express = require('express');
+const routes = require('./routes');
 
 const app = express();
-
-app.get('/', (request, response) => {
-  response.send('Hello Holberton School!');
-});
-
 const port = 1245;
+
+app.use('/', routes);
+
 app.listen(port, () => {
   console.log(`Server is running : http://localhost:${port}/`);
 });
+
 module.exports = app;
